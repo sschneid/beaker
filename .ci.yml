@@ -13,8 +13,6 @@
           bundle install
           rake travis
     publishers:
-      - junit:
-          results: result.xml
       - email-ext:
           recipients: sschneider@puppetlabs.com
           subject: 'An e-mail notification from the cloud!'
