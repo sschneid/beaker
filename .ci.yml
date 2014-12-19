@@ -18,7 +18,7 @@
           end
           EOF
           bundle install
-          bundle exec genconfig icentos7-64mcd-64 > hosts.cfg
+          bundle exec genconfig centos7-64mcd-64 > hosts.cfg
           cat hosts.cfg
           mv -f Gemfile.bck Gemfile
           git clone git://github.com/puppetlabs/puppet.git
