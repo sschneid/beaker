@@ -51,7 +51,7 @@
             :preserve_hosts => 'onfail',
           }
           EOF
-          bundle exec rake ci:test:packages SHA=master
+          bundle exec rake ci:test:packages SHA=3.7.2
           RESULT=$?
           rm -rf $BUNDLE_PATH
     publishers:
