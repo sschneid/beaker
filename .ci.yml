@@ -1,0 +1,76 @@
+---
+- job:
+    project-type: freestyle
+    builders:
+      - shell: |
+          #!/bin/bash
+          . /usr/local/rvm/scripts/rvm
+          rvm use ruby-2.1.1
+          gem install bundler
+          ruby --version
+          gem --version
+          bundle --version
+          bundle install
+          rake travis
+
+
+          #!/bin/bash
+          source /usr/local/rvm/scripts/rvm
+          rvm use 1.9.3-p484
+          mv -f Gemfile Gemfile.bck
+          cat > Gemfile <<-EOF
+          if ENV['NO_MIRROR']
+            source 'https://rubygems.org'
+          else
+            source 'http://rubygems.delivery.puppetlabs.net'
+          end
+          unless ENV['NO_MIRROR']
+            gem 'sqa-utils'
+          end
+          EOF
+          bundle install
+          bundle exec genconfig icentos7-64mcd-64 > hosts.cfg
+          cat hosts.cfg
+          mv -f Gemfile.bck Gemfile
+          git clone git://github.com/puppetlabs/puppet.git
+          cd puppet
+          git checkout master
+          cd acceptance
+          set -e
+          set -v
+          sed -i -e "/repo_proxy/d" Rakefile
+          sed -i -e "/timesync/d" Rakefile
+          sed -i -e "s/gem .*['\"].*beaker['\"].*$/gem \"beaker\", :path => '..\/..\/.'/" Gemfile
+          cat Gemfile
+          BUNDLE_PATH=`mktemp -d`
+          bundle install --without=development --path $BUNDLE_PATH
+          cat > local_options.rb <<-EOF
+          {
+            :hosts_file => '../../hosts.cfg',
+            :ssh => {
+              :keys => ["${HOME}/.ssh/id_rsa-acceptance"],
+            },
+            :timeout => 1200,
+            :log_level => 'debug',
+            :fail_mode => 'fast',
+            :tests => [
+          `find tests/ -type f -name '*.rb' | sed -re 's/^(.*)$/"\1",/'`
+          ],
+            :forge_host => 'api-forge-aio01-petest.puppetlabs.com',
+            'service-wait' => true,
+            'xml' => true,
+            :preserve_hosts => 'onfail',
+          }
+          EOF
+          bundle exec rake ci:test:packages
+          RESULT=$?
+          rm -rf $BUNDLE_PATH
+    publishers:
+      - email-ext:
+          recipients: sschneider@puppetlabs.com
+          subject: 'An e-mail notification from the cloud!'
+          attach-build-log: true
+          always: true
+      - logstash:
+          max-log-lines: -1
+          can-fail-job: false
