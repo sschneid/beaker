@@ -11,8 +11,7 @@
           gem --version
           bundle --version
           bundle install
-          bundle exec gem list
-          bundle exec rspec -r yarjuf -f JUnit -o result.xml -fp spec
+          rake travis
     publishers:
       - junit:
           results: result.xml
