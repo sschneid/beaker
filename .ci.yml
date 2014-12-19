@@ -1,0 +1,26 @@
+---
+- job:
+    project-type: freestyle
+    builders:
+      - shell: |
+          #!/bin/bash
+          . /usr/local/rvm/scripts/rvm
+          rvm use ruby-2.1.1
+          gem install bundler
+          ruby --version
+          gem --version
+          bundle --version
+          bundle install
+          bundle exec gem list
+          bundle exec rspec -r yarjuf -f JUnit -o result.xml -fp spec
+    publishers:
+      - junit:
+          results: result.xml
+      - email-ext:
+          recipients: sschneider@puppetlabs.com
+          subject: 'An e-mail notification from the cloud!'
+          attach-build-log: true
+          always: true
+      - logstash:
+          max-log-lines: -1
+          can-fail-job: false
